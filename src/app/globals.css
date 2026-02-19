@@ -1,26 +1,135 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-black: #0a0a0a;
+  --color-white: #fafaf9;
+  --color-green: #00ff41;
+  --color-green-dark: #00cc33;
+  --color-green-dim: #0a3d1a;
+  --color-yellow: #ffe14d;
+  --color-gray-100: #f1f1ef;
+  --color-gray-200: #e0e0dc;
+  --color-gray-300: #c4c4be;
+  --color-gray-600: #6b6b65;
+  --color-gray-800: #2a2a27;
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-space-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-white);
+  color: var(--color-black);
+  font-family: var(--font-sans);
+}
+
+/* Neo-brutalism utilities */
+.border-brutal {
+  border: 3px solid var(--color-black);
+}
+
+.shadow-brutal {
+  box-shadow: 6px 6px 0px var(--color-black);
+}
+
+.shadow-brutal-sm {
+  box-shadow: 4px 4px 0px var(--color-black);
+}
+
+.shadow-brutal-green {
+  box-shadow: 6px 6px 0px var(--color-green-dark);
+}
+
+.hover-brutal {
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.hover-brutal:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 6px 6px 0px var(--color-black);
+}
+
+.hover-brutal:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+.hover-brutal-green:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 6px 6px 0px var(--color-green-dark);
+}
+
+/* Hero grid lines */
+.hero-grid-bg {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 49px,
+    rgba(0, 255, 65, 0.04) 49px,
+    rgba(0, 255, 65, 0.04) 50px
+  );
+}
+
+/* Custom select arrow */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230a0a0a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+
+/* Validation states */
+.field-error input,
+.field-error select,
+.field-error textarea {
+  border-color: #ef4444 !important;
+  box-shadow: 4px 4px 0px #ef4444 !important;
+}
+
+.field-valid input,
+.field-valid select,
+.field-valid textarea {
+  border-color: var(--color-green-dark) !important;
+}
+
+.field-error .file-drop-zone {
+  border-color: #ef4444 !important;
+}
+
+.field-valid .file-drop-zone {
+  border-color: var(--color-green-dark) !important;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.error-msg {
+  animation: fadeInDown 0.2s ease-out;
+}
+
+/* Details marker removal */
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary {
+  list-style: none;
 }
