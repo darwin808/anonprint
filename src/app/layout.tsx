@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     description:
       "Upload. Print. Deliver. No accounts, no tracking. Your files are deleted after printing.",
     type: "website",
-    url: "https://anonprint.ph",
+    url: "https://anonprint.xyz",
     locale: "en_PH",
   },
   twitter: {
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   robots: "index, follow",
   alternates: {
-    canonical: "https://anonprint.ph",
+    canonical: "https://anonprint.xyz",
   },
 };
 
@@ -47,7 +47,7 @@ const localBusinessSchema = {
   name: "AnonPrint",
   description:
     "Anonymous online printing and delivery service in Metro Manila, Philippines.",
-  url: "https://anonprint.ph",
+  url: "https://anonprint.xyz",
   areaServed: {
     "@type": "GeoCircle",
     geoMidpoint: {
