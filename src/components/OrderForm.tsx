@@ -23,7 +23,7 @@ const PH_PHONE_REGEX = /^09\d{9}$/;
 function validateField(name: string, value: string, file?: File | null): string {
   switch (name) {
     case "email":
-      if (!value.trim()) return "Email is required";
+      if (!value.trim()) return "Email is required for tracking updates";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Enter a valid email address";
       return "";
     case "document":
@@ -33,13 +33,13 @@ function validateField(name: string, value: string, file?: File | null): string 
         return "Unsupported format — use PDF, DOC, PPT, JPG, or PNG";
       return "";
     case "print_type":
-      if (!value) return "Select a print type";
-      return "";
-    case "copies":
-      if (!value || parseInt(value) < 1) return "At least 1 copy required";
+      if (!value) return "Select B&W or Color";
       return "";
     case "paper_size":
       if (!value) return "Select a paper size";
+      return "";
+    case "copies":
+      if (!value || parseInt(value) < 1) return "At least 1 copy required";
       return "";
     case "address":
       if (!value.trim()) return "Delivery address is required";
@@ -65,7 +65,6 @@ function validateField(name: string, value: string, file?: File | null): string 
   }
 }
 
-// -- Error message component --
 function ErrorMsg({ msg }: { msg?: string }) {
   if (!msg) return null;
   return (
@@ -78,12 +77,20 @@ function ErrorMsg({ msg }: { msg?: string }) {
   );
 }
 
-// -- Valid checkmark --
 function ValidMark() {
   return (
     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-dark font-bold text-sm pointer-events-none">
       ✓
     </span>
+  );
+}
+
+function PrivacyNote({ children }: { children: React.ReactNode }) {
+  return (
+    <small className="text-xs text-gray-600 mt-1.5 flex items-center gap-1.5 block">
+      <span className="text-green-dark">🔒</span>
+      {children}
+    </small>
   );
 }
 
@@ -101,12 +108,10 @@ export function OrderForm() {
   const docFileRef = useRef<File | null>(null);
   const receiptFileRef = useRef<File | null>(null);
 
-  // Track which fields user has interacted with
   const markTouched = useCallback((name: string) => {
     setTouched((prev) => ({ ...prev, [name]: true }));
   }, []);
 
-  // Validate a single field and update errors
   const validateSingle = useCallback(
     (name: string, value: string, file?: File | null) => {
       const error = validateField(name, value, file);
@@ -116,14 +121,12 @@ export function OrderForm() {
     []
   );
 
-  // On blur — validate if field has been touched
   function handleBlur(e: FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     markTouched(name);
     validateSingle(name, value);
   }
 
-  // On change — validate immediately if already touched (clear errors fast)
   function handleChange(e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     if (touched[name]) {
@@ -131,7 +134,6 @@ export function OrderForm() {
     }
   }
 
-  // File change handlers
   function handleDocChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] || null;
     docFileRef.current = file;
@@ -148,7 +150,6 @@ export function OrderForm() {
     validateSingle("receipt", "", file);
   }
 
-  // Full form validation
   function validateAll(): boolean {
     const form = formRef.current;
     if (!form) return false;
@@ -157,8 +158,8 @@ export function OrderForm() {
       { name: "email", value: (form.elements.namedItem("email") as HTMLInputElement)?.value || "" },
       { name: "document", value: "", file: docFileRef.current },
       { name: "print_type", value: (form.elements.namedItem("print_type") as HTMLSelectElement)?.value || "" },
-      { name: "copies", value: (form.elements.namedItem("copies") as HTMLInputElement)?.value || "" },
       { name: "paper_size", value: (form.elements.namedItem("paper_size") as HTMLSelectElement)?.value || "" },
+      { name: "copies", value: (form.elements.namedItem("copies") as HTMLInputElement)?.value || "" },
       { name: "address", value: (form.elements.namedItem("address") as HTMLTextAreaElement)?.value || "" },
       { name: "contact_number", value: (form.elements.namedItem("contact_number") as HTMLInputElement)?.value || "" },
       { name: "receipt", value: "", file: receiptFileRef.current },
@@ -177,7 +178,6 @@ export function OrderForm() {
     setErrors(newErrors);
     setTouched((prev) => ({ ...prev, ...newTouched }));
 
-    // Shake fields with errors
     if (Object.keys(newErrors).length > 0) {
       const shakes: Record<string, boolean> = {};
       for (const name of Object.keys(newErrors)) {
@@ -186,7 +186,6 @@ export function OrderForm() {
       setShakeFields(shakes);
       setTimeout(() => setShakeFields({}), 500);
 
-      // Scroll to first error
       const firstErrorField = fieldsToValidate.find((f) => newErrors[f.name]);
       if (firstErrorField) {
         const el =
@@ -206,7 +205,6 @@ export function OrderForm() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
     if (!validateAll()) return;
 
     setSubmitting(true);
@@ -242,7 +240,6 @@ export function OrderForm() {
     e.preventDefault();
   }
 
-  // Field state helpers
   function fieldState(name: string) {
     if (!touched[name]) return "";
     if (errors[name]) return "field-error";
@@ -262,9 +259,11 @@ export function OrderForm() {
         <h2 className="text-[clamp(2rem,4vw,3rem)] font-black uppercase tracking-tight mb-3">
           Submit Your Order
         </h2>
-        <p className="text-lg text-gray-600 mb-12">
-          Upload your file, details, and payment receipt. We&apos;ll email you
-          the tracking info.
+        <p className="text-lg text-gray-600 mb-4">
+          Upload your file, pick your options, attach payment receipt. That&apos;s it.
+        </p>
+        <p className="text-sm text-gray-300 bg-black border-brutal px-4 py-3 mb-12 inline-block font-mono">
+          🔒 We don&apos;t ask your name. You&apos;re anonymous to us.
         </p>
 
         <form
@@ -299,9 +298,7 @@ export function OrderForm() {
               </div>
               <ErrorMsg msg={touched.email ? errors.email : undefined} />
               {!errors.email && (
-                <small className="text-xs text-gray-600 mt-1.5 block">
-                  Only used for sending tracking updates
-                </small>
+                <PrivacyNote>Only used for tracking updates. Deleted after delivery.</PrivacyNote>
               )}
             </div>
           </fieldset>
@@ -355,6 +352,9 @@ export function OrderForm() {
                 </div>
               </div>
               <ErrorMsg msg={touched.document ? errors.document : undefined} />
+              {!errors.document && (
+                <PrivacyNote>Permanently deleted within 24hrs after printing.</PrivacyNote>
+              )}
             </div>
           </fieldset>
 
@@ -363,7 +363,7 @@ export function OrderForm() {
             <legend className="font-mono text-sm font-bold uppercase tracking-[2px] px-3 bg-green text-black border-2 border-black">
               Print Details
             </legend>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
               <div className={`${fieldState("print_type")} ${fieldShake("print_type")}`}>
                 <label htmlFor="printType" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
                   Print Type *
@@ -377,17 +377,37 @@ export function OrderForm() {
                   onChange={handleChange}
                 >
                   <option value="" disabled>
-                    Select type
+                    Select
                   </option>
-                  <option value="bw">Black &amp; White — ₱5/page</option>
-                  <option value="color">Full Color — ₱12/page</option>
-                  <option value="photo">Photo Print — ₱20/piece</option>
+                  <option value="bw">B&amp;W — ₱5/page</option>
+                  <option value="color">Color — ₱12/page</option>
                 </select>
                 <ErrorMsg msg={touched.print_type ? errors.print_type : undefined} />
               </div>
+              <div className={`${fieldState("paper_size")} ${fieldShake("paper_size")}`}>
+                <label htmlFor="paperSize" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
+                  Paper Size *
+                </label>
+                <select
+                  id="paperSize"
+                  name="paper_size"
+                  defaultValue=""
+                  className={`${inputBase} pr-10`}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                >
+                  <option value="" disabled>
+                    Select
+                  </option>
+                  <option value="short">Short (Letter)</option>
+                  <option value="long">Long (Legal)</option>
+                  <option value="a4">A4</option>
+                </select>
+                <ErrorMsg msg={touched.paper_size ? errors.paper_size : undefined} />
+              </div>
               <div className={`${fieldState("copies")} ${fieldShake("copies")}`}>
                 <label htmlFor="copies" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                  Number of Copies *
+                  Copies *
                 </label>
                 <div className="relative">
                   <input
@@ -405,67 +425,6 @@ export function OrderForm() {
                 <ErrorMsg msg={touched.copies ? errors.copies : undefined} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-              <div className={`${fieldState("paper_size")} ${fieldShake("paper_size")}`}>
-                <label htmlFor="paperSize" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                  Paper Size *
-                </label>
-                <select
-                  id="paperSize"
-                  name="paper_size"
-                  defaultValue=""
-                  className={`${inputBase} pr-10`}
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                >
-                  <option value="" disabled>
-                    Select size
-                  </option>
-                  <option value="a4">A4</option>
-                  <option value="short">Short (Letter)</option>
-                  <option value="long">Long (Legal)</option>
-                  <option value="4r">4R (Photo)</option>
-                </select>
-                <ErrorMsg msg={touched.paper_size ? errors.paper_size : undefined} />
-              </div>
-              <div>
-                <label htmlFor="sided" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                  Sides
-                </label>
-                <select id="sided" name="sided" className={`${inputBase} pr-10`}>
-                  <option value="single">Single-sided</option>
-                  <option value="double">Double-sided</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Add-ons */}
-            <div className="mb-5">
-              <label className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                Add-ons
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { value: "spiral", label: "Spiral Binding — ₱40" },
-                  { value: "lamination", label: "Lamination — ₱25" },
-                  { value: "staple", label: "Staple Binding — ₱10" },
-                  { value: "folder", label: "Folder — ₱15" },
-                ].map((addon) => (
-                  <label
-                    key={addon.value}
-                    className="flex items-center gap-3 text-sm cursor-pointer px-3.5 py-2.5 border-2 border-gray-200 hover:border-black transition-colors has-[:checked]:border-green-dark has-[:checked]:bg-green/5"
-                  >
-                    <input
-                      type="checkbox"
-                      name="addons"
-                      value={addon.value}
-                      className="w-5 h-5 accent-green-dark cursor-pointer"
-                    />
-                    {addon.label}
-                  </label>
-                ))}
-              </div>
-            </div>
 
             <div>
               <label htmlFor="instructions" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
@@ -475,9 +434,12 @@ export function OrderForm() {
                 id="instructions"
                 name="instructions"
                 rows={3}
-                placeholder="e.g., Print pages 1-10 only, specific orientation, etc."
+                placeholder="e.g., double-sided, print pages 1-10 only, landscape, binding needed, etc."
                 className={`${inputBase} resize-y min-h-[80px]`}
               />
+              <small className="text-xs text-gray-600 mt-1.5 block">
+                Anything extra — just tell us here.
+              </small>
             </div>
           </fieldset>
 
@@ -500,50 +462,38 @@ export function OrderForm() {
                 onChange={handleChange}
               />
               <ErrorMsg msg={touched.address ? errors.address : undefined} />
+              {!errors.address && (
+                <PrivacyNote>Shared with Lalamove courier only. Not stored.</PrivacyNote>
+              )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className={`${fieldState("contact_number")} ${fieldShake("contact_number")}`}>
-                <label htmlFor="contactNum" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                  Contact Number *
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    id="contactNum"
-                    name="contact_number"
-                    placeholder="09XX XXX XXXX"
-                    maxLength={11}
-                    className={inputBase}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                  />
-                  {touched.contact_number && !errors.contact_number && <ValidMark />}
-                </div>
-                <ErrorMsg msg={touched.contact_number ? errors.contact_number : undefined} />
-                {!errors.contact_number && (
-                  <small className="text-xs text-gray-600 mt-1.5 block">
-                    For the courier only
-                  </small>
-                )}
+            <div className={`${fieldState("contact_number")} ${fieldShake("contact_number")}`}>
+              <label htmlFor="contactNum" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
+                Contact Number *
+              </label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  id="contactNum"
+                  name="contact_number"
+                  placeholder="09XX XXX XXXX"
+                  maxLength={11}
+                  className={inputBase}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                />
+                {touched.contact_number && !errors.contact_number && <ValidMark />}
               </div>
-              <div>
-                <label htmlFor="schedule" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                  Preferred Schedule
-                </label>
-                <select id="schedule" name="schedule" className={`${inputBase} pr-10`}>
-                  <option value="asap">As soon as possible</option>
-                  <option value="morning">Morning (8AM-12PM)</option>
-                  <option value="afternoon">Afternoon (12PM-5PM)</option>
-                  <option value="evening">Evening (5PM-8PM)</option>
-                </select>
-              </div>
+              <ErrorMsg msg={touched.contact_number ? errors.contact_number : undefined} />
+              {!errors.contact_number && (
+                <PrivacyNote>For the courier only. Not stored after delivery.</PrivacyNote>
+              )}
             </div>
           </fieldset>
 
           {/* ===== Payment Receipt ===== */}
           <fieldset className="border-brutal p-8 mb-6 bg-white">
             <legend className="font-mono text-sm font-bold uppercase tracking-[2px] px-3 bg-green text-black border-2 border-black">
-              Payment Receipt
+              Payment
             </legend>
             <div className={`mb-5 ${fieldState("receipt")} ${fieldShake("receipt")}`}>
               <label className="block font-bold text-sm uppercase tracking-[1px] mb-2">
@@ -589,55 +539,39 @@ export function OrderForm() {
                 </div>
               </div>
               <ErrorMsg msg={touched.receipt ? errors.receipt : undefined} />
+              <PrivacyNote>GCash/Maya handles your payment. We never see your payment details.</PrivacyNote>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label htmlFor="refNum" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                  Reference Number
-                </label>
+            <div className={`${fieldState("amount_paid")} ${fieldShake("amount_paid")}`}>
+              <label htmlFor="amountPaid" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
+                Amount Paid (₱) *
+              </label>
+              <div className="relative">
                 <input
-                  type="text"
-                  id="refNum"
-                  name="reference_number"
-                  placeholder="GCash/Maya ref number"
+                  type="number"
+                  id="amountPaid"
+                  name="amount_paid"
+                  min={200}
+                  placeholder="200"
                   className={inputBase}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
                 />
+                {touched.amount_paid && !errors.amount_paid && <ValidMark />}
               </div>
-              <div className={`${fieldState("amount_paid")} ${fieldShake("amount_paid")}`}>
-                <label htmlFor="amountPaid" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                  Amount Paid (₱) *
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    id="amountPaid"
-                    name="amount_paid"
-                    min={200}
-                    placeholder="200"
-                    className={inputBase}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                  />
-                  {touched.amount_paid && !errors.amount_paid && <ValidMark />}
-                </div>
-                <ErrorMsg msg={touched.amount_paid ? errors.amount_paid : undefined} />
-              </div>
+              <ErrorMsg msg={touched.amount_paid ? errors.amount_paid : undefined} />
             </div>
           </fieldset>
 
           {/* Disclaimer */}
           <div className="border-2 border-green-dark bg-green-dim px-6 py-5 mb-6">
             <p className="text-sm text-green leading-relaxed">
-              🔒 By submitting, you agree that your files will be used solely
-              for printing and will be{" "}
-              <strong className="text-white">
-                permanently deleted within 24 hours
-              </strong>{" "}
-              after delivery. We do not store, share, or backup your documents.
+              🔒 <strong className="text-white">Your privacy is guaranteed.</strong>{" "}
+              We don&apos;t ask your name. Files are permanently deleted within 24 hours.
+              Your address and number are only shared with the courier and never stored.
             </p>
           </div>
 
-          {/* Error summary on submit attempt */}
+          {/* Error summary */}
           {Object.keys(errors).filter((k) => touched[k] && errors[k]).length > 0 && (
             <div className="border-2 border-[#ef4444] bg-[#ef4444]/10 px-6 py-4 mb-6 error-msg">
               <p className="font-mono text-sm font-bold text-[#ef4444] mb-2">
@@ -679,9 +613,12 @@ export function OrderForm() {
             <h3 className="font-mono text-xl text-green mb-3 uppercase">
               Order Received
             </h3>
-            <p className="text-gray-300 text-[0.95rem] leading-relaxed mb-6">
-              We&apos;ll verify your payment and start printing. Check your
-              email for tracking updates.
+            <p className="text-gray-300 text-[0.95rem] leading-relaxed mb-3">
+              We&apos;ll verify your payment and start printing.
+              Check your email for tracking updates.
+            </p>
+            <p className="text-xs text-gray-600 mb-6 font-mono">
+              🔒 Your files will be deleted within 24 hours.
             </p>
             <button
               onClick={() => setSubmitted(false)}

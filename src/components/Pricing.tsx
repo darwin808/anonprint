@@ -6,7 +6,6 @@ const plans = [
     features: [
       "A4 / Short / Long",
       "Standard 80gsm paper",
-      "Single or double-sided",
       "Great for documents & reports",
     ],
   },
@@ -18,28 +17,9 @@ const plans = [
     features: [
       "A4 / Short / Long",
       "Vibrant color output",
-      "Single or double-sided",
       "Great for presentations & flyers",
     ],
   },
-  {
-    name: "Photo Print",
-    price: "₱20",
-    unit: "/piece",
-    features: [
-      "4R / A4 sizes",
-      "Glossy or matte finish",
-      "High-resolution output",
-      "Great for photos & artwork",
-    ],
-  },
-];
-
-const addons = [
-  { name: "Spiral Binding", price: "₱40" },
-  { name: "Lamination (A4)", price: "₱25" },
-  { name: "Staple Binding", price: "₱10" },
-  { name: "Folder", price: "₱15" },
 ];
 
 const deliveryTiers = [
@@ -56,11 +36,11 @@ export function Pricing() {
           Pricing
         </h2>
         <p className="text-lg text-gray-600 mb-12">
-          Transparent. No hidden fees. Minimum order ₱200.
+          Simple. Transparent. Minimum order ₱200.
         </p>
 
         {/* Price cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 max-w-[700px]">
           {plans.map((plan) => (
             <article
               key={plan.name}
@@ -95,24 +75,6 @@ export function Pricing() {
           ))}
         </div>
 
-        {/* Addons */}
-        <div className="border-brutal p-8 bg-gray-100 mb-6">
-          <h3 className="text-xl uppercase font-bold mb-5">Add-ons</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {addons.map((a) => (
-              <div
-                key={a.name}
-                className="flex justify-between items-center px-4 py-3 border-2 border-black bg-white"
-              >
-                <span className="font-semibold text-sm">{a.name}</span>
-                <span className="font-mono font-bold text-green-dark">
-                  {a.price}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Delivery */}
         <div className="border-brutal p-8 bg-black text-white">
           <h3 className="text-xl uppercase font-bold mb-5">
@@ -138,6 +100,11 @@ export function Pricing() {
             orders before 2:00 PM.
           </p>
         </div>
+
+        <p className="mt-6 text-sm text-gray-600">
+          Need something extra like binding or lamination? Just mention it in
+          the special instructions when you order.
+        </p>
       </div>
     </section>
   );

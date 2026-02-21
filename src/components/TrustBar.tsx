@@ -1,8 +1,8 @@
 const items = [
+  "No name required",
+  "No account needed",
   "Files deleted after printing",
-  "No account required",
-  "No data stored",
-  "Same-day delivery available",
+  "Zero data stored",
 ];
 
 export function TrustBar() {

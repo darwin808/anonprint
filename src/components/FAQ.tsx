@@ -1,11 +1,15 @@
 const faqs = [
   {
-    q: "How does anonymous printing work?",
-    a: "Upload your document, pay via GCash or Maya, and attach your payment receipt. We print your files and deliver via Lalamove courier. No account needed, no data stored — just send and print.",
+    q: "Do you know my name or identity?",
+    a: "No. We never ask for your name. You're just an order number to us. The only info we need is an email (for tracking), your document, delivery address, and contact number (for the courier).",
   },
   {
     q: "What happens to my files after printing?",
     a: "All uploaded files are permanently deleted within 24 hours after your order is printed and delivered. We do not store, share, or backup your documents. Ever.",
+  },
+  {
+    q: "What about my delivery address and number?",
+    a: "Your address and contact number are shared with the Lalamove courier for delivery only. We do not save this information after your order is fulfilled.",
   },
   {
     q: "What file formats do you accept?",
@@ -24,8 +28,8 @@ const faqs = [
     a: "Minimum order is ₱200 (excluding delivery fee).",
   },
   {
-    q: "Can I track my order?",
-    a: "Yes! Once we book the Lalamove courier, we'll email you the tracking link so you can monitor your delivery in real-time.",
+    q: "Can I request binding, lamination, or other extras?",
+    a: "Yes! Just mention it in the Special Instructions field when you submit your order. We'll accommodate what we can and confirm via email.",
   },
 ];
 

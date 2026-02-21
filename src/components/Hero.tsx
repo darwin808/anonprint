@@ -4,7 +4,7 @@ export function Hero() {
       <div className="absolute inset-0 hero-grid-bg pointer-events-none" />
       <div className="max-w-[1140px] mx-auto px-6 relative">
         <div className="inline-block font-mono text-xs tracking-[3px] text-green border-2 border-green px-5 py-2 mb-8">
-          NO ACCOUNTS. NO TRACKING. NO BS.
+          NO NAME. NO ACCOUNT. NO TRACE.
         </div>
 
         <h1 className="font-sans font-black text-[clamp(2.8rem,7vw,5.5rem)] leading-[1.05] mb-6 uppercase tracking-tighter">
@@ -14,10 +14,10 @@ export function Hero() {
         </h1>
 
         <p className="text-lg text-gray-300 max-w-[540px] mb-10 leading-relaxed">
-          Upload your document. We print it. Deliver it to your door.
+          Send your document. We print it. Deliver it to your door.
           <br />
           <strong className="text-green">
-            Your files are deleted after printing.
+            We don&apos;t know your name. We don&apos;t want to.
           </strong>
         </p>
 
@@ -37,6 +37,14 @@ export function Hero() {
         </div>
 
         <div className="flex gap-12 pt-10 border-t border-white/10 flex-wrap">
+          <div className="flex flex-col">
+            <span className="font-mono text-xl font-bold text-green">
+              No Name
+            </span>
+            <span className="text-xs text-gray-600 uppercase tracking-[1px] mt-1">
+              Required
+            </span>
+          </div>
           <div className="flex flex-col">
             <span className="font-mono text-xl font-bold text-green">
               24hr
