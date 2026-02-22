@@ -9,6 +9,7 @@ import {
   type ChangeEvent,
   type FocusEvent,
 } from "react";
+import { submitOrder } from "@/app/actions/submitOrder";
 
 // -- Validation rules --
 type FieldErrors = Record<string, string>;
@@ -99,6 +100,7 @@ export function OrderForm() {
   const [receiptName, setReceiptName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [docDragOver, setDocDragOver] = useState(false);
   const [receiptDragOver, setReceiptDragOver] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -211,13 +213,9 @@ export function OrderForm() {
 
     try {
       const formData = new FormData(e.currentTarget);
-      const res = await fetch(e.currentTarget.action, {
-        method: "POST",
-        body: formData,
-        headers: { Accept: "application/json" },
-      });
+      const result = await submitOrder(formData);
 
-      if (res.ok) {
+      if (result.success) {
         formRef.current?.reset();
         setDocName("");
         setReceiptName("");
@@ -225,9 +223,10 @@ export function OrderForm() {
         receiptFileRef.current = null;
         setErrors({});
         setTouched({});
+        setOrderId(result.orderId || null);
         setSubmitted(true);
       } else {
-        alert("Something went wrong. Please try again.");
+        alert(result.error || "Something went wrong. Please try again.");
       }
     } catch {
       alert("Something went wrong. Please try again or contact us directly.");
@@ -269,9 +268,6 @@ export function OrderForm() {
         <form
           ref={formRef}
           className="max-w-[720px] mx-auto"
-          action="https://formspree.io/f/xojnknbk"
-          method="POST"
-          encType="multipart/form-data"
           onSubmit={handleSubmit}
           noValidate
         >
@@ -613,6 +609,11 @@ export function OrderForm() {
             <h3 className="font-mono text-xl text-green mb-3 uppercase">
               Order Received
             </h3>
+            {orderId && (
+              <p className="font-mono text-sm text-yellow bg-black border-2 border-yellow/30 px-4 py-2 mb-4 inline-block">
+                Order ID: {orderId}
+              </p>
+            )}
             <p className="text-gray-300 text-[0.95rem] leading-relaxed mb-3">
               We&apos;ll verify your payment and start printing.
               Check your email for tracking updates.
