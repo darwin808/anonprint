@@ -269,7 +269,7 @@ export function OrderForm() {
         <form
           ref={formRef}
           className="max-w-[720px] mx-auto"
-          action="https://formspree.io/f/PLACEHOLDER"
+          action="https://formspree.io/f/xojnknbk"
           method="POST"
           encType="multipart/form-data"
           onSubmit={handleSubmit}
