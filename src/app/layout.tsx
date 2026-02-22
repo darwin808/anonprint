@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     description:
       "Upload. Print. Deliver. No accounts, no tracking. Your files are deleted after printing.",
   },
+  verification: {
+    google: "N2F_fojhKwOYMbCkfaITHU3KuODIOH_-9YW0r7NqAiE",
+  },
   robots: "index, follow",
   alternates: {
     canonical: "https://anonprint.xyz",
