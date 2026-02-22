@@ -1,6 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
 import { supabase } from "@/lib/supabase";
+import { ratelimit } from "@/lib/ratelimit";
+import { verifyRecaptchaToken } from "@/lib/recaptcha";
 
 export type OrderResult = {
   success: boolean;
@@ -10,6 +13,30 @@ export type OrderResult = {
 
 export async function submitOrder(formData: FormData): Promise<OrderResult> {
   try {
+    // --- Honeypot check ---
+    const honeypot = formData.get("website") as string;
+    if (honeypot) {
+      // Return fake success to avoid tipping off bots
+      return { success: true, orderId: `AP-${Date.now().toString(36).toUpperCase()}` };
+    }
+
+    // --- Rate limit check ---
+    const headersList = await headers();
+    const ip =
+      headersList.get("x-forwarded-for")?.split(",")[0].trim() ||
+      headersList.get("x-real-ip") ||
+      "unknown";
+    const { success: allowed } = await ratelimit.limit(ip);
+    if (!allowed) {
+      return { success: false, error: "Too many submissions. Please wait a few minutes." };
+    }
+
+    // --- reCAPTCHA check ---
+    const recaptchaToken = formData.get("g-recaptcha-response") as string;
+    if (!recaptchaToken || !(await verifyRecaptchaToken(recaptchaToken))) {
+      return { success: false, error: "Please complete the verification." };
+    }
+
     const email = formData.get("email") as string;
     const printType = formData.get("print_type") as string;
     const paperSize = formData.get("paper_size") as string;

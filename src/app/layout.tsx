@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { JsonLd } from "@/components/JsonLd";
 
@@ -106,6 +107,10 @@ export default function RootLayout({
       <head>
         <JsonLd data={localBusinessSchema} />
         <JsonLd data={faqSchema} />
+        <Script
+          src="https://www.google.com/recaptcha/api.js?render=explicit"
+          strategy="afterInteractive"
+        />
       </head>
       <body
         className={`${inter.variable} ${spaceMono.variable} antialiased`}

@@ -4,6 +4,7 @@ import {
   useState,
   useRef,
   useCallback,
+  useEffect,
   type FormEvent,
   type DragEvent,
   type ChangeEvent,
@@ -178,9 +179,36 @@ export function OrderForm() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [shakeFields, setShakeFields] = useState<Record<string, boolean>>({});
+  const [recaptchaError, setRecaptchaError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const docFileRef = useRef<File | null>(null);
   const receiptFileRef = useRef<File | null>(null);
+  const recaptchaRef = useRef<HTMLDivElement>(null);
+  const recaptchaWidgetId = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) return;
+
+    const interval = setInterval(() => {
+      if (
+        window.grecaptcha &&
+        recaptchaRef.current &&
+        recaptchaWidgetId.current === null
+      ) {
+        recaptchaWidgetId.current = window.grecaptcha.render(
+          recaptchaRef.current,
+          {
+            sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!,
+            theme: "dark",
+            callback: () => setRecaptchaError(""),
+          }
+        );
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const markTouched = useCallback((name: string) => {
     setTouched((prev) => ({ ...prev, [name]: true }));
@@ -281,6 +309,16 @@ export function OrderForm() {
     e.preventDefault();
     if (!validateAll()) return;
 
+    // Check reCAPTCHA
+    const recaptchaToken =
+      window.grecaptcha && recaptchaWidgetId.current !== null
+        ? window.grecaptcha.getResponse(recaptchaWidgetId.current)
+        : "";
+    if (!recaptchaToken) {
+      setRecaptchaError("Please complete the reCAPTCHA");
+      return;
+    }
+
     setSubmitting(true);
     setLoadingStep(0);
 
@@ -291,6 +329,7 @@ export function OrderForm() {
 
     try {
       const formData = new FormData(e.currentTarget);
+      formData.set("g-recaptcha-response", recaptchaToken);
       const result = await submitOrder(formData);
 
       clearInterval(stepTimer);
@@ -314,6 +353,10 @@ export function OrderForm() {
       clearInterval(stepTimer);
       alert("Something went wrong. Please try again or contact us directly.");
     } finally {
+      // Reset reCAPTCHA widget
+      if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+        window.grecaptcha.reset(recaptchaWidgetId.current);
+      }
       setSubmitting(false);
       setLoadingStep(0);
     }
@@ -382,6 +425,28 @@ export function OrderForm() {
               )}
             </div>
           </fieldset>
+
+          {/* Honeypot — invisible to real users */}
+          <div
+            style={{
+              position: "absolute",
+              left: "-9999px",
+              top: "-9999px",
+              opacity: 0,
+              height: 0,
+              overflow: "hidden",
+            }}
+            aria-hidden="true"
+          >
+            <label htmlFor="website">Website</label>
+            <input
+              type="text"
+              id="website"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
 
           {/* ===== Document ===== */}
           <fieldset className="border-brutal p-8 mb-6 bg-white">
@@ -666,6 +731,19 @@ export function OrderForm() {
               </ul>
             </div>
           )}
+
+          {/* reCAPTCHA */}
+          <div className="mb-6 flex flex-col items-center">
+            <div ref={recaptchaRef} />
+            {recaptchaError && (
+              <p className="font-mono text-xs font-bold text-[#ef4444] mt-2 flex items-center gap-1.5">
+                <span className="inline-flex items-center justify-center w-4 h-4 bg-[#ef4444] text-white text-[10px] font-bold shrink-0">
+                  !
+                </span>
+                {recaptchaError}
+              </p>
+            )}
+          </div>
 
           {/* Submit */}
           <button
