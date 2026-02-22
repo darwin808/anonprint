@@ -66,6 +66,77 @@ function validateField(name: string, value: string, file?: File | null): string 
   }
 }
 
+const LOADING_STEPS = [
+  { icon: "📤", text: "Uploading your document..." },
+  { icon: "🧾", text: "Uploading payment receipt..." },
+  { icon: "💾", text: "Saving your order..." },
+  { icon: "📧", text: "Sending confirmation..." },
+  { icon: "✅", text: "Done!" },
+];
+
+function LoadingOverlay({ step }: { step: number }) {
+  return (
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-6">
+      <div className="bg-black border-[3px] border-green p-10 max-w-[420px] w-full shadow-[8px_8px_0_var(--color-green-dark)]">
+        {/* Spinner */}
+        <div className="flex justify-center mb-8">
+          {step < 4 ? (
+            <div className="loading-spinner" />
+          ) : (
+            <div className="text-5xl">✅</div>
+          )}
+        </div>
+
+        {/* Current step */}
+        <p className="font-mono text-lg text-green text-center mb-8 font-bold">
+          {LOADING_STEPS[step]?.text || "Processing..."}
+        </p>
+
+        {/* Step progress */}
+        <div className="space-y-3">
+          {LOADING_STEPS.slice(0, 4).map((s, i) => (
+            <div key={s.text} className="flex items-center gap-3">
+              <span className="text-lg w-7 text-center">
+                {i < step ? "✅" : i === step ? s.icon : "⬜"}
+              </span>
+              <span
+                className={`font-mono text-xs uppercase tracking-[1px] ${
+                  i < step
+                    ? "text-green"
+                    : i === step
+                      ? "text-white"
+                      : "text-gray-600"
+                }`}
+              >
+                {s.text.replace("...", "")}
+              </span>
+              {i === step && i < 4 && (
+                <span className="flex gap-1 ml-auto">
+                  <span className="pulse-dot w-1.5 h-1.5 bg-green rounded-full" />
+                  <span className="pulse-dot w-1.5 h-1.5 bg-green rounded-full" />
+                  <span className="pulse-dot w-1.5 h-1.5 bg-green rounded-full" />
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-8 h-1 bg-gray-800 w-full">
+          <div
+            className="h-full bg-green transition-all duration-1000 ease-out"
+            style={{ width: `${((step + 1) / 5) * 100}%` }}
+          />
+        </div>
+
+        <p className="text-center text-xs text-gray-600 mt-4 font-mono">
+          🔒 Your files are encrypted in transit
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ErrorMsg({ msg }: { msg?: string }) {
   if (!msg) return null;
   return (
@@ -99,6 +170,7 @@ export function OrderForm() {
   const [docName, setDocName] = useState("");
   const [receiptName, setReceiptName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [docDragOver, setDocDragOver] = useState(false);
@@ -210,12 +282,22 @@ export function OrderForm() {
     if (!validateAll()) return;
 
     setSubmitting(true);
+    setLoadingStep(0);
+
+    // Cycle through loading steps for UX
+    const stepTimer = setInterval(() => {
+      setLoadingStep((prev) => (prev < 3 ? prev + 1 : prev));
+    }, 2000);
 
     try {
       const formData = new FormData(e.currentTarget);
       const result = await submitOrder(formData);
 
+      clearInterval(stepTimer);
+
       if (result.success) {
+        setLoadingStep(4); // complete
+        await new Promise((r) => setTimeout(r, 600)); // brief pause to show completion
         formRef.current?.reset();
         setDocName("");
         setReceiptName("");
@@ -229,9 +311,11 @@ export function OrderForm() {
         alert(result.error || "Something went wrong. Please try again.");
       }
     } catch {
+      clearInterval(stepTimer);
       alert("Something went wrong. Please try again or contact us directly.");
     } finally {
       setSubmitting(false);
+      setLoadingStep(0);
     }
   }
 
@@ -595,6 +679,9 @@ export function OrderForm() {
           </button>
         </form>
       </div>
+
+      {/* Loading Overlay */}
+      {submitting && <LoadingOverlay step={loadingStep} />}
 
       {/* Success Modal */}
       {submitted && (
