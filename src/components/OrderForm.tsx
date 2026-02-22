@@ -18,7 +18,7 @@ const ACCEPTED_DOC_TYPES = [
   ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".jpg", ".jpeg", ".png",
 ];
 const ACCEPTED_RECEIPT_TYPES = [".jpg", ".jpeg", ".png", ".pdf"];
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const PH_PHONE_REGEX = /^09\d{9}$/;
 
 function validateField(name: string, value: string, file?: File | null): string {
@@ -29,7 +29,7 @@ function validateField(name: string, value: string, file?: File | null): string 
       return "";
     case "document":
       if (!file) return "Please upload your document";
-      if (file.size > MAX_FILE_SIZE) return "File too large — max 25MB";
+      if (file.size > MAX_FILE_SIZE) return "File too large — max 10MB";
       if (!ACCEPTED_DOC_TYPES.some((ext) => file.name.toLowerCase().endsWith(ext)))
         return "Unsupported format — use PDF, DOC, PPT, JPG, or PNG";
       return "";
@@ -53,7 +53,7 @@ function validateField(name: string, value: string, file?: File | null): string 
       return "";
     case "receipt":
       if (!file) return "Please upload your payment receipt";
-      if (file.size > MAX_FILE_SIZE) return "File too large — max 25MB";
+      if (file.size > MAX_FILE_SIZE) return "File too large — max 10MB";
       if (!ACCEPTED_RECEIPT_TYPES.some((ext) => file.name.toLowerCase().endsWith(ext)))
         return "Use JPG, PNG, or PDF only";
       return "";
@@ -341,7 +341,7 @@ export function OrderForm() {
                         <strong className="text-green-dark">click to browse</strong>
                       </span>
                       <span className="font-mono text-xs text-gray-300 uppercase tracking-[1px]">
-                        PDF, DOC, DOCX, PPT, JPG, PNG — Max 25MB
+                        PDF, DOC, DOCX, PPT, JPG, PNG — Max 10MB
                       </span>
                     </>
                   )}
@@ -528,7 +528,7 @@ export function OrderForm() {
                         <strong className="text-green-dark">click to browse</strong>
                       </span>
                       <span className="font-mono text-xs text-gray-300 uppercase tracking-[1px]">
-                        JPG, PNG, PDF — Max 25MB
+                        JPG, PNG, PDF — Max 10MB
                       </span>
                     </>
                   )}

@@ -30,12 +30,22 @@ export async function submitOrder(formData: FormData): Promise<OrderResult> {
       return { success: false, error: "Minimum order is ₱200" };
     }
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
     if (!document || document.size === 0) {
       return { success: false, error: "Document is required" };
     }
 
+    if (document.size > MAX_FILE_SIZE) {
+      return { success: false, error: "Document too large — max 10MB" };
+    }
+
     if (!receipt || receipt.size === 0) {
       return { success: false, error: "Payment receipt is required" };
+    }
+
+    if (receipt.size > MAX_FILE_SIZE) {
+      return { success: false, error: "Receipt too large — max 10MB" };
     }
 
     // Generate unique order ID
