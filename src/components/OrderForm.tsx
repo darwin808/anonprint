@@ -22,7 +22,43 @@ const ACCEPTED_RECEIPT_TYPES = [".jpg", ".jpeg", ".png", ".pdf"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const PH_PHONE_REGEX = /^09\d{9}$/;
 
-function validateField(name: string, value: string, file?: File | null): string {
+const DELIVERY_ZONES = [
+  {
+    zone: 1,
+    label: "Zone 1",
+    fee: 60,
+    areas: ["Antipolo", "Cainta", "Taytay", "Angono", "Binangonan"],
+  },
+  {
+    zone: 2,
+    label: "Zone 2",
+    fee: 100,
+    areas: ["Marikina", "Pasig", "Taguig", "San Juan"],
+  },
+  {
+    zone: 3,
+    label: "Zone 3",
+    fee: 250,
+    areas: ["Quezon City", "Mandaluyong", "Makati", "Manila", "Pateros"],
+  },
+  {
+    zone: 4,
+    label: "Zone 4",
+    fee: 250,
+    areas: ["Caloocan", "Malabon", "Navotas", "Valenzuela", "Las Piñas", "Muntinlupa", "Parañaque"],
+  },
+] as const;
+
+// Flat lookup: area name → { zone label, fee }
+const AREA_LOOKUP: Map<string, { zone: string; fee: number }> = new Map(
+  DELIVERY_ZONES.flatMap((z) =>
+    z.areas.map((a) => [a, { zone: z.label, fee: z.fee }])
+  )
+);
+
+const PRINT_PRICES = { bw: 5, color: 12 } as const;
+
+function validateField(name: string, value: string, file?: File | null, minAmount?: number): string {
   switch (name) {
     case "email":
       if (!value.trim()) return "Email is required for tracking updates";
@@ -43,6 +79,12 @@ function validateField(name: string, value: string, file?: File | null): string 
     case "copies":
       if (!value || parseInt(value) < 1) return "At least 1 copy required";
       return "";
+    case "pages":
+      if (!value || parseInt(value) < 1) return "At least 1 page required";
+      return "";
+    case "delivery_area":
+      if (!value) return "Select a delivery area";
+      return "";
     case "address":
       if (!value.trim()) return "Delivery address is required";
       if (value.trim().length < 10) return "Please enter a complete address";
@@ -58,10 +100,12 @@ function validateField(name: string, value: string, file?: File | null): string 
       if (!ACCEPTED_RECEIPT_TYPES.some((ext) => file.name.toLowerCase().endsWith(ext)))
         return "Use JPG, PNG, or PDF only";
       return "";
-    case "amount_paid":
+    case "amount_paid": {
       if (!value) return "Amount is required";
-      if (parseInt(value) < 200) return "Minimum order is ₱200";
+      const min = minAmount && minAmount > 200 ? minAmount : 200;
+      if (parseInt(value) < min) return `Minimum amount is ₱${min}`;
       return "";
+    }
     default:
       return "";
   }
@@ -178,6 +222,10 @@ export function OrderForm() {
   const [receiptDragOver, setReceiptDragOver] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [printType, setPrintType] = useState("");
+  const [pages, setPages] = useState("");
+  const [copies, setCopies] = useState("1");
+  const [deliveryArea, setDeliveryArea] = useState("");
   const [shakeFields, setShakeFields] = useState<Record<string, boolean>>({});
   const [recaptchaError, setRecaptchaError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
@@ -185,6 +233,16 @@ export function OrderForm() {
   const receiptFileRef = useRef<File | null>(null);
   const recaptchaRef = useRef<HTMLDivElement>(null);
   const recaptchaWidgetId = useRef<number | null>(null);
+
+  // Price breakdown calculation
+  const pagesNum = parseInt(pages) || 0;
+  const copiesNum = parseInt(copies) || 0;
+  const pricePerPage = printType ? PRINT_PRICES[printType as keyof typeof PRINT_PRICES] : 0;
+  const areaInfo = deliveryArea ? AREA_LOOKUP.get(deliveryArea) : undefined;
+  const printCost = pagesNum * pricePerPage * copiesNum;
+  const deliveryFee = areaInfo?.fee ?? 0;
+  const totalPrice = printCost + deliveryFee;
+  const showBreakdown = printType && pagesNum > 0 && copiesNum > 0 && deliveryArea;
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) return;
@@ -216,11 +274,11 @@ export function OrderForm() {
 
   const validateSingle = useCallback(
     (name: string, value: string, file?: File | null) => {
-      const error = validateField(name, value, file);
+      const error = validateField(name, value, file, totalPrice || undefined);
       setErrors((prev) => ({ ...prev, [name]: error }));
       return error;
     },
-    []
+    [totalPrice]
   );
 
   function handleBlur(e: FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -234,6 +292,11 @@ export function OrderForm() {
     if (touched[name]) {
       validateSingle(name, value);
     }
+    // Sync tracked values for price breakdown
+    if (name === "print_type") setPrintType(value);
+    if (name === "pages") setPages(value);
+    if (name === "copies") setCopies(value);
+    if (name === "delivery_area") setDeliveryArea(value);
   }
 
   function handleDocChange(e: ChangeEvent<HTMLInputElement>) {
@@ -262,6 +325,8 @@ export function OrderForm() {
       { name: "print_type", value: (form.elements.namedItem("print_type") as HTMLSelectElement)?.value || "" },
       { name: "paper_size", value: (form.elements.namedItem("paper_size") as HTMLSelectElement)?.value || "" },
       { name: "copies", value: (form.elements.namedItem("copies") as HTMLInputElement)?.value || "" },
+      { name: "pages", value: (form.elements.namedItem("pages") as HTMLInputElement)?.value || "" },
+      { name: "delivery_area", value: (form.elements.namedItem("delivery_area") as HTMLSelectElement)?.value || "" },
       { name: "address", value: (form.elements.namedItem("address") as HTMLTextAreaElement)?.value || "" },
       { name: "contact_number", value: (form.elements.namedItem("contact_number") as HTMLInputElement)?.value || "" },
       { name: "receipt", value: "", file: receiptFileRef.current },
@@ -273,7 +338,7 @@ export function OrderForm() {
 
     for (const field of fieldsToValidate) {
       newTouched[field.name] = true;
-      const error = validateField(field.name, field.value, field.file);
+      const error = validateField(field.name, field.value, field.file, totalPrice || undefined);
       if (error) newErrors[field.name] = error;
     }
 
@@ -344,6 +409,10 @@ export function OrderForm() {
         receiptFileRef.current = null;
         setErrors({});
         setTouched({});
+        setPrintType("");
+        setPages("");
+        setCopies("1");
+        setDeliveryArea("");
         setOrderId(result.orderId || null);
         setSubmitted(true);
       } else {
@@ -508,7 +577,7 @@ export function OrderForm() {
             <legend className="font-mono text-sm font-bold uppercase tracking-[2px] px-3 bg-green text-black border-2 border-black">
               Print Details
             </legend>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
               <div className={`${fieldState("print_type")} ${fieldShake("print_type")}`}>
                 <label htmlFor="printType" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
                   Print Type *
@@ -549,6 +618,25 @@ export function OrderForm() {
                   <option value="a4">A4</option>
                 </select>
                 <ErrorMsg msg={touched.paper_size ? errors.paper_size : undefined} />
+              </div>
+              <div className={`${fieldState("pages")} ${fieldShake("pages")}`}>
+                <label htmlFor="pages" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
+                  Number of Pages *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="pages"
+                    name="pages"
+                    min={1}
+                    placeholder="1"
+                    className={inputBase}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                  />
+                  {touched.pages && !errors.pages && <ValidMark />}
+                </div>
+                <ErrorMsg msg={touched.pages ? errors.pages : undefined} />
               </div>
               <div className={`${fieldState("copies")} ${fieldShake("copies")}`}>
                 <label htmlFor="copies" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
@@ -593,15 +681,42 @@ export function OrderForm() {
             <legend className="font-mono text-sm font-bold uppercase tracking-[2px] px-3 bg-green text-black border-2 border-black">
               Delivery
             </legend>
+            <div className={`mb-5 ${fieldState("delivery_area")} ${fieldShake("delivery_area")}`}>
+              <label htmlFor="deliveryArea" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
+                Delivery Area *
+              </label>
+              <select
+                id="deliveryArea"
+                name="delivery_area"
+                defaultValue=""
+                className={`${inputBase} pr-10`}
+                onBlur={handleBlur}
+                onChange={handleChange}
+              >
+                <option value="" disabled>
+                  Select your area
+                </option>
+                {DELIVERY_ZONES.map((zone) => (
+                  <optgroup key={zone.zone} label={`${zone.label} — ₱${zone.fee} delivery`}>
+                    {zone.areas.map((area) => (
+                      <option key={area} value={area}>
+                        {area} (₱{zone.fee})
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <ErrorMsg msg={touched.delivery_area ? errors.delivery_area : undefined} />
+            </div>
             <div className={`mb-5 ${fieldState("address")} ${fieldShake("address")}`}>
               <label htmlFor="address" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
-                Delivery Address *
+                Full Address *
               </label>
               <textarea
                 id="address"
                 name="address"
                 rows={2}
-                placeholder="Complete address (street, barangay, city)"
+                placeholder="Street, barangay, building/unit, landmarks"
                 className={`${inputBase} resize-y`}
                 onBlur={handleBlur}
                 onChange={handleChange}
@@ -686,6 +801,30 @@ export function OrderForm() {
               <ErrorMsg msg={touched.receipt ? errors.receipt : undefined} />
               <PrivacyNote>GCash/Maya handles your payment. We never see your payment details.</PrivacyNote>
             </div>
+
+            {/* Price Breakdown */}
+            {showBreakdown && (
+              <div className="mb-5 border-2 border-green-dark bg-black px-5 py-4 font-mono text-sm">
+                <p className="text-xs uppercase tracking-[2px] text-green mb-3 font-bold">
+                  Order Summary
+                </p>
+                <div className="space-y-1.5 text-gray-300">
+                  <p>
+                    Print: {pagesNum} {pagesNum === 1 ? "page" : "pages"} × ₱{pricePerPage} × {copiesNum} {copiesNum === 1 ? "copy" : "copies"} ={" "}
+                    <span className="text-white font-bold">₱{printCost}</span>
+                  </p>
+                  <p>
+                    Delivery: {deliveryArea} ({areaInfo?.zone}) ={" "}
+                    <span className="text-white font-bold">₱{deliveryFee}</span>
+                  </p>
+                  <hr className="border-gray-700 my-2" />
+                  <p className="text-green font-bold text-base">
+                    Total: ₱{totalPrice}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className={`${fieldState("amount_paid")} ${fieldShake("amount_paid")}`}>
               <label htmlFor="amountPaid" className="block font-bold text-sm uppercase tracking-[1px] mb-2">
                 Amount Paid (₱) *
@@ -695,8 +834,8 @@ export function OrderForm() {
                   type="number"
                   id="amountPaid"
                   name="amount_paid"
-                  min={200}
-                  placeholder="200"
+                  min={showBreakdown ? totalPrice : 200}
+                  placeholder={showBreakdown ? String(totalPrice) : "200"}
                   className={inputBase}
                   onBlur={handleBlur}
                   onChange={handleChange}
@@ -704,6 +843,11 @@ export function OrderForm() {
                 {touched.amount_paid && !errors.amount_paid && <ValidMark />}
               </div>
               <ErrorMsg msg={touched.amount_paid ? errors.amount_paid : undefined} />
+              {showBreakdown && (
+                <small className="text-xs text-gray-600 mt-1.5 block font-mono">
+                  Minimum based on calculated total: ₱{totalPrice}
+                </small>
+              )}
             </div>
           </fieldset>
 

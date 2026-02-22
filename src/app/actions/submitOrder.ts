@@ -41,6 +41,8 @@ export async function submitOrder(formData: FormData): Promise<OrderResult> {
     const printType = formData.get("print_type") as string;
     const paperSize = formData.get("paper_size") as string;
     const copies = parseInt(formData.get("copies") as string) || 1;
+    const pages = parseInt(formData.get("pages") as string) || 1;
+    const deliveryArea = formData.get("delivery_area") as string;
     const instructions = formData.get("instructions") as string;
     const address = formData.get("address") as string;
     const contactNumber = formData.get("contact_number") as string;
@@ -49,7 +51,7 @@ export async function submitOrder(formData: FormData): Promise<OrderResult> {
     const receipt = formData.get("receipt") as File | null;
 
     // Validate required fields
-    if (!email || !printType || !paperSize || !address || !contactNumber || !amountPaid) {
+    if (!email || !printType || !paperSize || !address || !contactNumber || !amountPaid || !deliveryArea || pages < 1) {
       return { success: false, error: "Missing required fields" };
     }
 
@@ -129,6 +131,8 @@ export async function submitOrder(formData: FormData): Promise<OrderResult> {
       print_type: printType,
       paper_size: paperSize,
       copies,
+      pages,
+      delivery_area: deliveryArea,
       instructions: instructions || null,
       address,
       contact_number: contactNumber,
@@ -162,8 +166,9 @@ export async function submitOrder(formData: FormData): Promise<OrderResult> {
               <h2 style="color:#00cc33;">New Order: ${orderId}</h2>
               <hr/>
               <p><strong>Customer Email:</strong> ${email}</p>
-              <p><strong>Print:</strong> ${printType === "bw" ? "Black & White" : "Full Color"} | ${paperSize.toUpperCase()} | ${copies} copies</p>
+              <p><strong>Print:</strong> ${printType === "bw" ? "Black & White" : "Full Color"} | ${paperSize.toUpperCase()} | ${pages} pages | ${copies} copies</p>
               <p><strong>Amount Paid:</strong> ₱${amountPaid}</p>
+              <p><strong>Delivery Area:</strong> ${deliveryArea}</p>
               <p><strong>Address:</strong> ${address}</p>
               <p><strong>Contact:</strong> ${contactNumber}</p>
               <p><strong>Instructions:</strong> ${instructions || "None"}</p>
@@ -190,7 +195,9 @@ export async function submitOrder(formData: FormData): Promise<OrderResult> {
               <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
                 <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Print Type</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${printType === "bw" ? "Black & White" : "Full Color"}</td></tr>
                 <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Paper Size</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${paperSize.toUpperCase()}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Pages</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${pages}</td></tr>
                 <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Copies</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${copies}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Delivery Area</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${deliveryArea}</td></tr>
                 <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Amount Paid</td><td style="padding:8px 0;color:#00ff41;border-bottom:1px solid #333;text-align:right;font-weight:bold;">₱${amountPaid}</td></tr>
               </table>
 
