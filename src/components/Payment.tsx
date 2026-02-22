@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export function Payment() {
   return (
     <section id="payment" className="py-20 bg-black text-white">
@@ -8,12 +10,12 @@ export function Payment() {
             Pay via GCash / Maya
           </h2>
           <p className="text-gray-300 mb-8 leading-relaxed">
-            Scan the QR code or send payment to the number below. Take a
+            Scan the QR code with your GCash or Maya app. Take a
             screenshot of your receipt — you&apos;ll upload it with your order.
           </p>
           <div className="flex flex-col gap-4">
             {[
-              "Scan QR or send to the number",
+              "Scan QR with GCash or Maya",
               "Screenshot your payment receipt",
               "Upload it with your order below",
             ].map((step, i) => (
@@ -30,16 +32,17 @@ export function Payment() {
         {/* QR */}
         <div className="flex justify-center">
           <div className="text-center">
-            <div className="w-60 h-60 border-[3px] border-green flex flex-col items-center justify-center gap-3 mx-auto mb-4 bg-green/5">
-              <span className="font-mono text-lg text-green font-bold">
-                [ QR CODE ]
-              </span>
-              <p className="text-xs text-gray-300 uppercase tracking-[2px]">
-                GCash / Maya
-              </p>
+            <div className="border-[3px] border-green p-3 mx-auto mb-4 bg-white inline-block">
+              <Image
+                src="/qr.jpg"
+                alt="Payment QR Code — Scan with GCash or Maya"
+                width={240}
+                height={240}
+                className="block"
+              />
             </div>
-            <p className="font-mono text-xl text-green font-bold tracking-[2px]">
-              0917 XXX XXXX
+            <p className="text-xs text-gray-300 uppercase tracking-[2px] font-mono">
+              GCash / Maya via InstaPay
             </p>
           </div>
         </div>
