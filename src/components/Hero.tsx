@@ -26,7 +26,7 @@ export function Hero() {
             href="#order"
             className="inline-block font-mono text-base font-bold px-10 py-[18px] bg-green text-black border-brutal uppercase tracking-[1px] hover-brutal hover-brutal-green"
           >
-            Send Your Files
+            Start Printing
           </a>
           <a
             href="#how"

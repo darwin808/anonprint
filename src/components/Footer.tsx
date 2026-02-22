@@ -17,7 +17,7 @@ export function Footer() {
           {[
             { href: "#how", label: "How It Works" },
             { href: "#pricing", label: "Pricing" },
-            { href: "#order", label: "Order Now" },
+            { href: "#order", label: "Start Printing" },
             { href: "#faq", label: "FAQ" },
           ].map((link) => (
             <a

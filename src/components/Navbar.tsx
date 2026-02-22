@@ -38,7 +38,7 @@ export function Navbar() {
               href="#order"
               className="font-mono text-sm font-bold bg-green text-black px-5 py-2 border-2 border-black hover-brutal uppercase tracking-[1px]"
             >
-              Order Now
+              Start Printing
             </a>
           </li>
         </ul>
@@ -84,7 +84,7 @@ export function Navbar() {
             onClick={() => setOpen(false)}
             className="font-mono text-sm font-bold bg-green text-black px-5 py-2 border-2 border-black text-center uppercase tracking-[1px]"
           >
-            Order Now
+            Start Printing
           </a>
         </div>
       )}
