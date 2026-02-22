@@ -117,26 +117,71 @@ export async function submitOrder(formData: FormData): Promise<OrderResult> {
       return { success: false, error: "Failed to save order. Please try again." };
     }
 
-    // Send email notification (optional — via Resend)
+    // Send emails via Resend
     if (process.env.RESEND_API_KEY) {
       try {
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
         const notifyEmail = process.env.NOTIFY_EMAIL || email;
 
+        // 1. Notify you (the owner) — includes customer email so you can reply
         await resend.emails.send({
           from: "AnonPrint <onboarding@resend.dev>",
           to: notifyEmail,
-          subject: `New Order: ${orderId}`,
+          replyTo: email,
+          subject: `🖨️ New Order: ${orderId}`,
           html: `
-            <h2>New Order: ${orderId}</h2>
-            <p><strong>Print:</strong> ${printType} | ${paperSize} | ${copies} copies</p>
-            <p><strong>Amount:</strong> ₱${amountPaid}</p>
-            <p><strong>Address:</strong> ${address}</p>
-            <p><strong>Contact:</strong> ${contactNumber}</p>
-            <p><strong>Instructions:</strong> ${instructions || "None"}</p>
-            <p><strong>Document:</strong> <a href="${docUrlData.publicUrl}">${document.name}</a></p>
-            <p><strong>Receipt:</strong> <a href="${receiptUrlData.publicUrl}">View</a></p>
+            <div style="font-family:monospace;max-width:600px;">
+              <h2 style="color:#00cc33;">New Order: ${orderId}</h2>
+              <hr/>
+              <p><strong>Customer Email:</strong> ${email}</p>
+              <p><strong>Print:</strong> ${printType === "bw" ? "Black & White" : "Full Color"} | ${paperSize.toUpperCase()} | ${copies} copies</p>
+              <p><strong>Amount Paid:</strong> ₱${amountPaid}</p>
+              <p><strong>Address:</strong> ${address}</p>
+              <p><strong>Contact:</strong> ${contactNumber}</p>
+              <p><strong>Instructions:</strong> ${instructions || "None"}</p>
+              <hr/>
+              <p><strong>Document:</strong> <a href="${docUrlData.publicUrl}">${document.name}</a></p>
+              <p><strong>Receipt:</strong> <a href="${receiptUrlData.publicUrl}">View Receipt</a></p>
+              <hr/>
+              <p style="color:#888;font-size:12px;">Reply to this email to contact the customer directly.</p>
+            </div>
+          `,
+        });
+
+        // 2. Confirmation to customer
+        await resend.emails.send({
+          from: "AnonPrint <onboarding@resend.dev>",
+          to: email,
+          replyTo: notifyEmail,
+          subject: `Order Confirmed: ${orderId}`,
+          html: `
+            <div style="font-family:monospace;max-width:600px;color:#fafaf9;background:#0a0a0a;padding:32px;">
+              <h2 style="color:#00ff41;margin:0 0 8px;">Order Confirmed</h2>
+              <p style="color:#00ff41;font-size:18px;font-weight:bold;margin:0 0 24px;">${orderId}</p>
+
+              <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+                <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Print Type</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${printType === "bw" ? "Black & White" : "Full Color"}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Paper Size</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${paperSize.toUpperCase()}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Copies</td><td style="padding:8px 0;color:#fafaf9;border-bottom:1px solid #333;text-align:right;">${copies}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;border-bottom:1px solid #333;">Amount Paid</td><td style="padding:8px 0;color:#00ff41;border-bottom:1px solid #333;text-align:right;font-weight:bold;">₱${amountPaid}</td></tr>
+              </table>
+
+              <p style="color:#c4c4be;font-size:14px;line-height:1.6;">
+                We&apos;re verifying your payment and will start printing shortly.
+                You&apos;ll receive your Lalamove tracking link via email once your order is dispatched.
+              </p>
+
+              <div style="margin-top:24px;padding:16px;border:1px solid #00cc33;background:#0a3d1a;">
+                <p style="color:#00ff41;font-size:12px;margin:0;">
+                  🔒 Your files will be permanently deleted within 24 hours after delivery. We don&apos;t store your data.
+                </p>
+              </div>
+
+              <p style="color:#555;font-size:11px;margin-top:24px;">
+                Reply to this email if you have questions about your order.
+              </p>
+            </div>
           `,
         });
       } catch (emailError) {
